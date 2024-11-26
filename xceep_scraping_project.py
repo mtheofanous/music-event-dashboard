@@ -237,3 +237,5 @@ for ciudad in ciudades:
     
     # Save the DataFrame to an Excel file for future analysis
     df.to_excel(f"events_{ciudad}.xlsx", index=False)
+
+# Description: This script scrapes event data from the Xceed website for multiple cities and saves the data to Excel files for further analysis.
