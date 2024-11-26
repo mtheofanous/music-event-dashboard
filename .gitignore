@@ -1,0 +1,8 @@
+# ignore .venv
+.venv
+
+# ignore file Data
+Data
+
+# ignore .env
+.env
