@@ -8,7 +8,10 @@ from functions import *
 from analysis import *
 from datetime import datetime, timedelta
 
-df = load_airtable_data()
+# df = load_airtable_data()
+
+# Load the data from the Airtable database
+df = pd.read_csv('Data/airtable_data.csv')
 
 # Preprocessing
 df['city'] = [city.split(',')[-2].strip() for city in df['location_address']]
@@ -20,7 +23,7 @@ df['free_entrance'] = df['remain_prices'].str.contains(r'\b0\.0\b', na=False)
 
 st.set_page_config(
     page_title="Event Analysis",  # Optional title
-    layout="wide",        # Choose between "wide" or "centered"
+    layout="centered",        # Choose between "wide" or "centered"
     initial_sidebar_state="auto"  # "expanded", "collapsed", or "auto"
 )
 
@@ -34,14 +37,14 @@ choose_starting_date = st.sidebar.date_input(
     "**Choose a starting date:**",
     min_value=df["starting_time"].dt.date.min(),
     max_value=df["finishing_time"].dt.date.max(),
-    value=df["starting_time"].dt.date.min(),
+    value=df["starting_time"].dt.date.min()
 )
 
 choose_finishing_date = st.sidebar.date_input(
     "**Choose a finishing date:**",
     min_value=choose_starting_date + timedelta(days=1),
     max_value=df["finishing_time"].dt.date.max(),
-    value=df["finishing_time"].dt.date.max()),  # Default to 7 days after the start date
+    value=df["finishing_time"].dt.date.max())  # Default to 7 days after the start date
 
 choose_price_filter = st.sidebar.selectbox("**Price filter:**", ["All", "Free", "Sold Out"], index=0)
 
