@@ -4,26 +4,11 @@ import plotly.express as px
 import streamlit as st
 from dotenv import load_dotenv
 import os
-from functions import fetch_airtable_data, airtable_to_dataframe
+from functions import *
 from analysis import *
 from datetime import datetime, timedelta
 
-# Load environment variables
-load_dotenv()
-
-TOKEN = os.getenv('XCEED_TOKEN')
-BASE_ID = os.getenv('BASE_ID')
-TABLE_ID = os.getenv('TABLE_ID')
-
-# Define Airtable API details
-airtable_base_url = "https://api.airtable.com/v0"
-headers = {"Authorization": f"Bearer {TOKEN}"}
-endpoint = f"{airtable_base_url}/{BASE_ID}/{TABLE_ID}"
-view_name = "Grid view"
-
-# Fetch and process data
-records = fetch_airtable_data(view_name=view_name, endpoint=endpoint, headers=headers)
-df = airtable_to_dataframe(records)
+df = load_airtable_data()
 
 # Preprocessing
 df['city'] = [city.split(',')[-2].strip() for city in df['location_address']]
@@ -35,7 +20,7 @@ df['free_entrance'] = df['remain_prices'].str.contains(r'\b0\.0\b', na=False)
 
 st.set_page_config(
     page_title="Event Analysis",  # Optional title
-    layout="wide",        # Choose between "centered" and "wide"
+    layout="wide",        # Choose between "wide" or "centered"
     initial_sidebar_state="auto"  # "expanded", "collapsed", or "auto"
 )
 
@@ -56,11 +41,7 @@ choose_finishing_date = st.sidebar.date_input(
     "**Choose a finishing date:**",
     min_value=choose_starting_date + timedelta(days=1),
     max_value=df["finishing_time"].dt.date.max(),
-    value=min(
-        df["finishing_time"].dt.date.max(),  # Ensure we don't exceed max available date
-        choose_starting_date + timedelta(days=7),  # Default to 7 days after the start date
-    ),
-)
+    value=df["finishing_time"].dt.date.max()),  # Default to 7 days after the start date
 
 choose_price_filter = st.sidebar.selectbox("**Price filter:**", ["All", "Free", "Sold Out"], index=0)
 
@@ -201,7 +182,6 @@ if choose_price_filter == "All":
     else:
         event_timeline(df_cities, choose_date)
         event_timeline_clubs(df_cities, choose_date)
-        event_timeline_to_png(df_cities, choose_date)
     # Analysis and Conclusions for Event Timeline 3 days range
     
     st.markdown(

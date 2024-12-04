@@ -110,5 +110,11 @@ if os.path.exists('data/report.csv'):
 else:
     report.to_csv('data/report.csv', mode='w', header=True, index=False)
     
+df = load_airtable_data()
+# save the data to a csv file
+df.to_csv('Data/airtable_data.csv', index=False)
+    
+
+    
 # Description: This script updates event data in Airtable by fetching new event URLs from Xceed and updating the event details. 
 # It also adds new events to Airtable if any are found. Finally, it generates a report with the number of events updated and added, along with the current date and time.            

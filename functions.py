@@ -430,3 +430,21 @@ def update_airtable_events(df, TOKEN, BASE_ID, TABLE_ID):
         data = {'remain_prices': remain_price, 'data_date': data_date}
         
         at.update(record_id, data)
+        
+def load_airtable_data():
+    # Load environment variables
+    load_dotenv()
+
+    TOKEN = os.getenv('XCEED_TOKEN')
+    BASE_ID = os.getenv('BASE_ID')
+    TABLE_ID = os.getenv('TABLE_ID')
+
+    # Define Airtable API details
+    airtable_base_url = "https://api.airtable.com/v0"
+    headers = {"Authorization": f"Bearer {TOKEN}"}
+    endpoint = f"{airtable_base_url}/{BASE_ID}/{TABLE_ID}"
+    view_name = "Grid view"
+
+    # Fetch and process data
+    records = fetch_airtable_data(view_name=view_name, endpoint=endpoint, headers=headers)
+    return airtable_to_dataframe(records)
