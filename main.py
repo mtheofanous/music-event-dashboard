@@ -8,8 +8,6 @@ from functions import *
 from analysis import *
 from datetime import datetime, timedelta
 
-# df = load_airtable_data()
-
 # Load the data from the Airtable database
 st.set_page_config(
     page_title="Music Events Analysis",  # Optional title
@@ -18,22 +16,14 @@ st.set_page_config(
 )
 @st.cache_data
 def load_data():
-    return pd.read_csv('Data/airtable_data.csv')
+    return pd.read_csv('Data/airtable_preprocessed_data.csv')
 
+# Load the data
 df = load_data()
 
-# Preprocessing
-@st.cache_data
-def preprocess_data(df):
-    df['city'] = [city.split(',')[-2].strip() for city in df['location_address']]
-    df = df[df['city'].isin(['Valencia', 'Madrid', 'Barcelona'])].reset_index(drop=True)
-    df['starting_time'] = pd.to_datetime(df['starting_time'])
-    df['starting_day'] = df['starting_time'].dt.day_name()
-    df['finishing_time'] = pd.to_datetime(df['finishing_time'])
-    df['free_entrance'] = df['remain_prices'].str.contains(r'\b0\.0\b', na=False)
-    return df
+df['starting_time'] = pd.to_datetime(df['starting_time'])
 
-df = preprocess_data(df)
+df['finishing_time'] = pd.to_datetime(df['finishing_time'])
 
 # Streamlit App Title and Description
 st.title("Event Data Analysis Dashboard")
@@ -94,6 +84,7 @@ if choice == "Overview":
 if choice == "Analysis and Conclusions":
     st.sidebar.header("Filters")
 
+
     # User inputs for filtering
     choose_starting_date = st.sidebar.date_input(
         "**Choose a starting date:**",
@@ -136,10 +127,17 @@ if choice == "Analysis and Conclusions":
             - Tracking genre preferences, city distribution, and ticket pricing can guide data-driven decision-making and enhance event planning strategies.
             """
         )
-        choice = st.sidebar.selectbox("Choose a visualization", ["Percentage of Events by City", "Top 10 Genres by City", "Genres by City (Sunburst)", "Average Ticket Prices by City and Day of the Week", "Event Timeline by City"])
+        choice = st.sidebar.selectbox("Choose a visualization", ["Percentage of Events by City", 
+                                                                 "Top 10 Genres by City", 
+                                                                 "Genres by City (Sunburst)", 
+                                                                 "Average Ticket Prices by City and Day of the Week", 
+                                                                 "Event Timeline by City",
+                                                                 "Distribution of Events by District",
+                                                                 "Heatmap", "Event Map"])
     
         # New Visualization pie chart of percentage of events per city
         if choice == "Percentage of Events by City":
+            st.subheader("Percentage of Events by City")
             labels = df['city'].value_counts().index
             values = df['city'].value_counts().values
             fig_pie = px.pie(
@@ -168,6 +166,7 @@ if choice == "Analysis and Conclusions":
 
         # Visualization 1: Top 10 Genres by City
         if choice == "Top 10 Genres by City":
+            st.subheader("Top 10 Genres by City")
             top10_genres_by_city(df)
         
             st.markdown(
@@ -187,6 +186,7 @@ if choice == "Analysis and Conclusions":
 
         # Visualization 2: Sunburst Chart of Genres by City
         if choice == "Genres by City (Sunburst)":
+            st.subheader("Genres by City (Sunburst)")
             genres_by_city_sunburst(df)
         
             st.markdown(
@@ -203,6 +203,7 @@ if choice == "Analysis and Conclusions":
             )
             
         if choice == "Average Ticket Prices by City and Day of the Week":
+            st.subheader("Average Ticket Prices by City and Day of the Week")
             average_ticket_prices_by_city_and_day_of_the_week(df)
             
             st.markdown(
@@ -251,8 +252,65 @@ if choice == "Analysis and Conclusions":
                 - Understanding periods of high activity ensures better resource allocation and avoids audience fatigue.
                 """
             )
+        if choice == "Distribution of Events by District":
+            st.subheader("Distribution of Events by District")
+            treemap_data(df)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Distribution of Events by District
+                
+                **Analysis**:
+                - The treemap visualization showcases the distribution of events by district within each city.
+                - It provides a detailed view of event density and venue popularity across different districts.
+                
+                **Conclusions**:
+                - Event planners can identify high-traffic districts and popular venues for hosting events.
+                - Understanding the distribution of events by district can guide venue selection and marketing strategies
+                
+                """
+            )
+        if choice == "Heatmap":
+            st.subheader("Heatmap of Events by City")
+            city = st.sidebar.selectbox("Select a city", df['city'].unique())
+            
+            heatmap_data(df, city)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Heatmap of Events by City
+                
+                **Analysis**:
+                - The heatmap visualization provides a geographic overview of event distribution across cities.
+                - It highlights event density and venue locations, offering insights into popular event areas.
+                
+                **Conclusions**:
+                - Event planners can identify high-traffic regions and popular venues for hosting events.
+                - Understanding the geographic distribution of events can guide venue selection and marketing strategies.
+                """
+            )
+        if choice == "Event Map":
+                
+                st.subheader("Event Map")
+                city = st.sidebar.selectbox("Select a city", df['city'].unique())
+                
+                event_map_data(df, city)
+                
+                st.markdown(
+                    """
+                    ### Analysis and Conclusions: Event Map
+                    
+                    **Analysis**:
+                    - The interactive map displays event locations within the selected city.
+                    - It provides a visual representation of event distribution and venue density.
+                    
+                    **Conclusions**:
+                    - Event planners can identify popular event areas and venue clusters for hosting events.
+                    - Understanding the geographic distribution of events can guide venue selection and marketing strategies.
+                    """
+                )
 
-    elif choose_price_filter == "Free":
+    if choose_price_filter == "Free":
         
         # Analysis and Conclusions for Price Filter
         st.markdown(
@@ -282,9 +340,17 @@ if choice == "Analysis and Conclusions":
         )
         
         df_free = df[df['free_entrance'] == True].copy()
+        choice = st.sidebar.selectbox("Choose a visualization", ["Percentage of Events by City", 
+                                                                 "Top 10 Genres by City", 
+                                                                 "Genres by City (Sunburst)", 
+                                                                 "Average Ticket Prices by City and Day of the Week",
+                                                                 "Event Timeline by City",
+                                                                 "Distribution of Events by District",
+                                                                 "Heatmap", "Event Map"])
     
     # New Visualization pie chart of percentage of free events out of all events
-        if st.sidebar.button("Show Percentage of Free Events out of All Events"):
+        if choice == "Percentage of Events by City":
+            st.subheader("Percentage of Free Events by City")
             labels = ['Free Events', 'Paid Events']
             values = [df_free.shape[0], df.shape[0] - df_free.shape[0]]
             fig_pie = px.pie(
@@ -310,73 +376,153 @@ if choice == "Analysis and Conclusions":
             )    
     
     # Visualization 1: Top 10 Genres by City (Free Events)
-            if st.sidebar.button("Show Top 10 Genres by City (Free Events)"):
-                top10_genres_by_city(df_free)
+        if choice == "Top 10 Genres by City":
+            st.subheader("Top 10 Genres by City - Free Events")
+            top10_genres_by_city(df_free)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Top 10 Genres by City (Free Events)
+            
+                **Analysis**:
+                - This chart visualizes the most popular genres for free events across Valencia, Madrid, and Barcelona.
+                - It highlights genre preferences for cost-free entertainment, offering insights into audience interests and promotional strategies.
+                
+                **Conclusions**:
+                - Genres like Electronic and House may be popular choices for free events, attracting a diverse audience.
+                - The availability of free tickets for specific genres can drive attendance and engagement, providing opportunities for event organizers to expand their reach.
+                """
+            )
+
+
+# Visualization 2: Sunburst Chart of Genres by City (Free Events)
+        if choice == "Genres by City (Sunburst)":
+            
+            st.subheader("Genres by City (Sunburst) - Free Events")
+            genres_by_city_sunburst(df_free)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Genres by City (Sunburst) - Free Events
+            
+                **Analysis**:
+                - The hierarchical view highlights the dominance of certain genres in free events across cities.
+                - This provides a clear breakdown of how each genre contributes to cost-free entertainment options.
+            
+                **Conclusions**:
+                - Event organizers can identify genres with high demand for free events and plan targeted marketing strategies to maximize audience engagement.
+                """
+            )
+        
+        if choice == "Average Ticket Prices by City and Day of the Week":
+            st.subheader("Average Ticket Prices by City and Day of the Week")
+            average_ticket_prices_by_city_and_day_of_the_week(df_free)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Average Ticket Prices by City and Day of the Week - Free Events
+            
+                **Analysis**:
+                - Variations in ticket prices across cities and days of the week are evident for free events.
+                - Understanding price sensitivities by day and city can guide event scheduling and promotions.
+                
+                **Conclusions**:
+                - Event planners can leverage insights into average ticket prices to optimize revenue and attendance for free events.
+                - Dynamic pricing strategies could help attract a broader audience and enhance event visibility.
+                """
+            )
+
+
+# Visualization 4: Event Timeline (by City) - Free Events
+        if choice == "Event Timeline by City":
+            
+            st.subheader(f"Events from {choose_starting_date} to {choose_finishing_date} by City (Free Events)")
+
+            choose_date = st.sidebar.date_input("**Choose a starting date:**", min_value=df['starting_time'].dt.date.min(), max_value=df['finishing_time'].dt.date.max() - timedelta(days=3), value=df['starting_time'].dt.date.min())    
+
+            all_cities = df_free['city'].unique()
+            
+            selected_city = st.sidebar.multiselect("Select cities to include", options=all_cities, default= None)
+            
+            df_cities = df_free[df_free['city'].isin(selected_city)]
+            
+            if df_cities.empty:
+                st.info("No events are selected.")
+            else:
+                event_timeline(df_cities, choose_date)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Event Timeline - Free Events
+            
+                **Analysis**:
+                - The timeline displays the distribution of free events across cities, helping organizers avoid overlaps and optimize schedules.
+                - The comparison of free event frequency by city provides insights into cost-free entertainment options.
+
+                **Conclusions**:
+                - Event planners can identify optimal time slots for hosting free events.
+                - Understanding periods of high free event activity ensures better resource allocation and avoids audience fatigue.
+                """
+            )
+        if choice == "Distribution of Events by District":
+            st.subheader("Distribution of Events by District - Free Events")
+            treemap_data(df_free)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Distribution of Events by District
+                
+                **Analysis**:
+                - The treemap visualization showcases the distribution of free events by district within each city.
+                - It provides a detailed view of event density and venue popularity across different districts.
+                
+                **Conclusions**:
+                - Event planners can identify high-traffic districts and popular venues for hosting free events.
+                - Understanding the distribution of free events by district can guide venue selection and marketing strategies
+                
+                """
+            )
+            
+        if choice == "Heatmap":
+            st.subheader("Heatmap of Events by City - Free Events")
+            city = st.sidebar.selectbox("Select a city", df['city'].unique())
+            
+            heatmap_data(df_free, city)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Heatmap of Events by City
+                
+                **Analysis**:
+                - The heatmap visualization provides a geographic overview of event distribution across cities.
+                - It highlights event density and venue locations, offering insights into popular event areas.
+                
+                **Conclusions**:
+                - Event planners can identify high-traffic regions and popular venues for hosting events.
+                - Understanding the geographic distribution of events can guide venue selection and marketing strategies.
+                """
+            )
+        if choice == "Event Map":
+                
+                st.subheader("Event Map - Free Events")
+                city = st.sidebar.selectbox("Select a city", df['city'].unique())
+                
+                event_map_data(df_free, city)
                 
                 st.markdown(
                     """
-                    ### Analysis and Conclusions: Top 10 Genres by City (Free Events)
-                
+                    ### Analysis and Conclusions: Event Map
+                    
                     **Analysis**:
-                    - This chart visualizes the most popular genres for free events across Valencia, Madrid, and Barcelona.
-                    - It highlights genre preferences for cost-free entertainment, offering insights into audience interests and promotional strategies.
+                    - The interactive map displays event locations within the selected city.
+                    - It provides a visual representation of event distribution and venue density.
                     
                     **Conclusions**:
-                    - Genres like Electronic and House may be popular choices for free events, attracting a diverse audience.
-                    - The availability of free tickets for specific genres can drive attendance and engagement, providing opportunities for event organizers to expand their reach.
+                    - Event planners can identify popular event areas and venue clusters for hosting events.
+                    - Understanding the geographic distribution of events can guide venue selection and marketing strategies.
                     """
                 )
 
-    
-    # Visualization 2: Sunburst Chart of Genres by City (Free Events)
-            if st.sidebar.button("Show Genres by City (Sunburst) - Free Events"):
-                genres_by_city_sunburst(df_free)
-                
-                st.markdown(
-                    """
-                    ### Analysis and Conclusions: Genres by City (Sunburst) - Free Events
-                
-                    **Analysis**:
-                    - The hierarchical view highlights the dominance of certain genres in free events across cities.
-                    - This provides a clear breakdown of how each genre contributes to cost-free entertainment options.
-                
-                    **Conclusions**:
-                    - Event organizers can identify genres with high demand for free events and plan targeted marketing strategies to maximize audience engagement.
-                    """
-                )
-    
-    
-    # Visualization 4: Event Timeline (by City) - Free Events
-            if st.sidebar.button("Show Event Timeline by City (Free Events)"):
-                st.subheader(f"Events from {choose_starting_date} to {choose_finishing_date} by City (Free Events)")
-    
-                choose_date = st.date_input("**Choose a starting date:**", min_value=df['starting_time'].dt.date.min(), max_value=df['finishing_time'].dt.date.max() - timedelta(days=3), value=df['starting_time'].dt.date.min())    
-    
-                all_cities = df_free['city'].unique()
-                
-                selected_city = st.multiselect("Select cities to include", options=all_cities, default= None)
-                
-                df_cities = df_free[df_free['city'].isin(selected_city)]
-                
-                if df_cities.empty:
-                    st.info("No events are selected.")
-                else:
-                    event_timeline(df_cities, choose_date)
-                
-                st.markdown(
-                    """
-                    ### Analysis and Conclusions: Event Timeline - Free Events
-                
-                    **Analysis**:
-                    - The timeline displays the distribution of free events across cities, helping organizers avoid overlaps and optimize schedules.
-                    - The comparison of free event frequency by city provides insights into cost-free entertainment options.
-
-                    **Conclusions**:
-                    - Event planners can identify optimal time slots for hosting free events.
-                    - Understanding periods of high free event activity ensures better resource allocation and avoids audience fatigue.
-                    """
-                )
-    
     elif choose_price_filter == "Sold Out":
         
         # Analysis and Conclusions for Price Filter
@@ -406,9 +552,17 @@ if choice == "Analysis and Conclusions":
         )
         
         df_sold_out = df[df['remain_prices'] == 'SOLD OUT']
+        choice = st.sidebar.selectbox("Choose a visualization", ["Percentage of Events by City", 
+                                                                 "Top 10 Genres by City", 
+                                                                 "Genres by City (Sunburst)", 
+                                                                 "Average Ticket Prices by City and Day of the Week", 
+                                                                 "Event Timeline by City",
+                                                                 "Distribution of Events by District",
+                                                                 "Heatmap", "Event Map"])
         
         # New Visualization pie chart of percentage of sold out events out of all events
-        if st.sidebar.button("Show Percentage of Sold Out Events out of All Events"):
+        if choice == "Percentage of Events by City":
+            st.subheader("Percentage of Sold Out Events by City")
             
             sold_out_events = df[df['remain_prices'] == 'SOLD OUT'].shape[0]
             all_events = df.shape[0]
@@ -438,7 +592,8 @@ if choice == "Analysis and Conclusions":
             )
             
         # Visualization 1: Top 10 Genres by City (Sold Out Events)
-        if st.sidebar.button("Show Top 10 Genres by City (Sold Out Events)"):
+        if choice == "Top 10 Genres by City":
+            st.subheader("Top 10 Genres by City - Sold Out Events")
             
             try:
                 top10_genres_by_city(df_sold_out)
@@ -460,7 +615,8 @@ if choice == "Analysis and Conclusions":
             )
         
         # Visualization 2: Sunburst Chart of Genres by City (Sold Out Events)
-        if st.sidebar.button("Show Genres by City (Sunburst) - Sold Out Events"):
+        if choice == "Genres by City (Sunburst)":
+            st.subheader("Genres by City (Sunburst) - Sold Out Events")
         
             try:
                 genres_by_city_sunburst(df_sold_out)
@@ -478,19 +634,36 @@ if choice == "Analysis and Conclusions":
                 - Event organizers can identify genres with exclusive access, limited availability, or high audience demand for future event planning.
                 """
             )
+        if choice == "Average Ticket Prices by City and Day of the Week":
+            st.subheader("Average Ticket Prices by City and Day of the Week")
+            average_ticket_prices_by_city_and_day_of_the_week(df_sold_out)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Average Ticket Prices by City and Day of the Week - Sold Out Events
+            
+                **Analysis**:
+                - Variations in ticket prices across cities and days of the week are evident for sold-out events.
+                - Understanding price sensitivities by day and city can guide event scheduling and promotions.
+                
+                **Conclusions**:
+                - Event planners can leverage insights into average ticket prices to optimize revenue and attendance for sold-out events.
+                - Dynamic pricing strategies could help attract a broader audience and enhance event visibility.
+                """
+            )
         
         # Visualization 4: Event Timeline (by City) - Sold Out Events 3 days range
-        if st.sidebar.button("Show Event Timeline by City (Sold Out Events 3 days range)"):
+        if choice == "Event Timeline by City":
             st.subheader(f"Events from {choose_starting_date} to {choose_finishing_date} by City (Sold Out Events)")
             
             if df_sold_out.empty:
                 st.info("No sold-out events are available.")
             else:
-                choose_date = st.date_input("**Choose a starting date:**", min_value=df['starting_time'].dt.date.min(), max_value=df['finishing_time'].dt.date.max(), value=df['starting_time'].dt.date.min())    
+                choose_date = st.sidebar.date_input("**Choose a starting date:**", min_value=df['starting_time'].dt.date.min(), max_value=df['finishing_time'].dt.date.max(), value=df['starting_time'].dt.date.min())    
 
                 all_cities = df_sold_out['city'].unique()
                 
-                selected_city = st.multiselect("Select cities to include", options=all_cities, default= None)
+                selected_city = st.sidebar.multiselect("Select cities to include", options=all_cities, default= None)
                 
                 df_cities = df_sold_out[df_sold_out['city'].isin(selected_city)]
                 
@@ -512,7 +685,65 @@ if choice == "Analysis and Conclusions":
                 - Understanding periods of high sold-out event activity ensures better resource allocation and avoids audience disappointment.
                 """
             )
-            
                 
+        if choice == "Distribution of Events by District":
+            st.subheader("Distribution of Events by District - Sold Out Events")
+            treemap_data(df_sold_out)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Distribution of Events by District - Sold Out Events
+                
+                **Analysis**:
+                - The treemap visualization showcases the distribution of sold-out events by district within each city.
+                - It provides a detailed view of event density and venue popularity across different districts.
+                
+                **Conclusions**:
+                - Event planners can identify high-traffic districts and popular venues for hosting sold-out events.
+                - Understanding the distribution of sold-out events by district can guide venue selection and marketing strategies
+                
+                """
+            )
         
+        if choice == "Heatmap":
+            st.subheader("Heatmap of Events by City")
+            city = st.sidebar.selectbox("Select a city", df['city'].unique())
+            
+            heatmap_data(df, city)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Heatmap of Events by City
+                
+                **Analysis**:
+                - The heatmap visualization provides a geographic overview of event distribution across cities.
+                - It highlights event density and venue locations, offering insights into popular event areas.
+                
+                **Conclusions**:
+                - Event planners can identify high-traffic regions and popular venues for hosting events.
+                - Understanding the geographic distribution of events can guide venue selection and marketing strategies.
+                """
+            )
+            
+        if choice == "Event Map":
+            
+            st.subheader("Event Map")
+            city = st.sidebar.selectbox("Select a city", df['city'].unique())
+            
+            event_map_data(df, city)
+            
+            st.markdown(
+                """
+                ### Analysis and Conclusions: Event Map
+                
+                **Analysis**:
+                - The interactive map displays event locations within the selected city.
+                - It provides a visual representation of event distribution and venue density.
+                
+                **Conclusions**:
+                - Event planners can identify popular event areas and venue clusters for hosting events.
+                - Understanding the geographic distribution of events can guide venue selection and marketing strategies.
+                """
+            )
+    
         

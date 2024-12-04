@@ -15,6 +15,7 @@ from tqdm import tqdm  # For displaying progress bars
 from functions import *  # Import custom functions from another file
 from dotenv import load_dotenv  # For loading environment variables from a .env file
 import airtable  # For interacting with Airtable API
+from geopy.geocoders import Nominatim
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -47,7 +48,7 @@ df_airtable_events = airtable_to_dataframe(records)
 ciudades = ['Valencia', 'Barcelona', 'Madrid']
 
 # Define the finish date for event scraping (current date + 10 days)
-finish_date = datetime.now() + timedelta(days=10)
+finish_date = datetime.now() + timedelta(days=5)
 
 # Update event URLs using a custom scraping function `scraping_xceed_urls`
 df_urls = scraping_xceed_urls(ciudades, finish_date)
@@ -112,9 +113,33 @@ else:
     
 df = load_airtable_data()
 # save the data to a csv file
-df.to_csv('Data/airtable_data.csv', index=False)
-    
 
+# Preprocessing
+
+geolocator = Nominatim(user_agent="geoapi")
+def get_district(lat, lon):
+    try:
+        location = geolocator.reverse((lat, lon), exactly_one=True, language='en')
+        address = location.raw.get('address', {})
+        return address.get('suburb', address.get('city', 'Unknown'))  # Try 'suburb', fallback to 'city'
+    except Exception as e:
+        return 'Unknown'
+       
+def preprocess_data(df):
+    df['city'] = [city.split(',')[-2].strip() for city in df['location_address']]
+    df = df[df['city'].isin(['Valencia', 'Madrid', 'Barcelona'])].reset_index(drop=True)
+    df['starting_time'] = pd.to_datetime(df['starting_time'])
+    df['starting_day'] = df['starting_time'].dt.day_name()
+    df['finishing_time'] = pd.to_datetime(df['finishing_time'])
+    df['free_entrance'] = df['remain_prices'].str.contains(r'\b0\.0\b', na=False)
+    df['latitud'] = df['location_identifier'].apply(lambda x: x.split(',')[0])
+    df['longitud'] = df['location_identifier'].apply(lambda x: x.split(',')[1])
+    df['district'] = df.apply(lambda x: get_district(x['latitud'], x['longitud']), axis=1)
+
+    return df
+
+df = preprocess_data(df)
+df.to_csv('Data/airtable_preprocessed_data.csv', index=False)
     
 # Description: This script updates event data in Airtable by fetching new event URLs from Xceed and updating the event details. 
 # It also adds new events to Airtable if any are found. Finally, it generates a report with the number of events updated and added, along with the current date and time.            
