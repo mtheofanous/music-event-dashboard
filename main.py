@@ -50,10 +50,14 @@ if choice == "Overview":
     st.markdown(
     """
     ### Overview  
-    Welcome to the Music Events Data Analysis Dashboard!  
-    This dashboard provides insights into music events across **Valencia**, **Madrid**, and **Barcelona**.  
-    The data was sourced from **Xceed** and stored in an Airtable database.  
+    
+    Welcome to the **Music Events Data Analysis Dashboard**!  
+    This dashboard provides comprehensive insights into music events across **Valencia**, **Madrid**, and **Barcelona**, 
+    leveraging data sourced from **Xceed** and stored in an Airtable database. By analyzing event trends, ticket pricing, and genre preferences, 
+    it offers actionable insights for event planners, marketers, and music enthusiasts.
+    
     """
+
     )
 
     st.write(f"**Data Range:** {df1['starting_time'].dt.date.min()} to {df1['finishing_time'].dt.date.max()}")
@@ -66,18 +70,32 @@ if choice == "Overview":
     # description of the project
     st.markdown(
         """
-        ### Project Description
-        
-        This project presents a data analysis of events in Valencia, Madrid, and Barcelona. The data was collected from 
-        Xceed and stored in an Airtable database. This analysis includes:
-        - A pie chart showing the percentage of events by city.
-        - Visualization of the top 10 genres by city.
-        - A sunburst chart showcasing genre distribution by city.
-        - Average ticket prices by city and day of the week.
-        - A timeline of events filtered by date range.
-        
-        This analysis aims to help event organizers, planners, and marketers better understand the event landscape 
-        and make data-driven decisions.
+    ### Project Description  
+
+    This project analyzes music events in three major Spanish cities to uncover patterns, trends, and insights that can guide strategic decision-making. 
+    Key objectives include:  
+
+    - **City-Wide Event Distribution**: Understanding how events are spread across cities and identifying regional hotspots for cultural activities.  
+    - **Genre Preferences**: Analyzing the popularity of genres to identify opportunities for niche event planning or marketing strategies.  
+    - **Ticket Price Analysis**: Examining pricing strategies, including free and sold-out events, to understand audience demand and affordability trends.  
+    - **Temporal Trends**: Exploring how event timing (weekdays vs. weekends) impacts attendance and pricing.  
+
+    #### Highlights:
+    - Visualizations include pie charts, sunburst charts, and treemaps that showcase event distributions, genre preferences, and geographic densities.
+    - Interactive heatmaps and event timelines allow for a detailed exploration of event locations and scheduling patterns.
+    - Analysis spans from free events to sold-out scenarios, offering insights into different segments of the market.
+
+    ### Conclusions  
+
+    The analysis reveals several actionable insights:  
+
+    - **Madrid Dominance**: Madrid hosts the highest number of events, reflecting its vibrant cultural scene. This makes it a focal point for diverse event offerings.  
+    - **Genre Specialization**: Barcelona shows a strong preference for Electronic and House music, suggesting a niche market ripe for targeted event planning.  
+    - **Accessibility in Valencia**: Events in Valencia tend to have lower ticket prices, making it a more accessible market for budget-conscious audiences.  
+    - **Peak Demand Days**: Fridays and Saturdays show the highest ticket prices, correlating with increased demand and suggesting opportunities for premium pricing strategies.  
+    - **Geographic Opportunities**: Heatmap analysis highlights high-density areas for events, providing guidance for venue selection and urban event planning.  
+
+    This dashboard equips users with the insights needed to optimize event planning, enhance audience engagement, and capitalize on emerging trends in the vibrant Spanish music scene.  
         """
     )
     
