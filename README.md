@@ -30,17 +30,14 @@ Selenium
 Airtable Python Client
 Steps
 Clone the repository:
-bash
-Αντιγραφή κώδικα
 git clone https://github.com/your-repo-name/event-data-analysis.git
+
 Install dependencies:
-bash
-Αντιγραφή κώδικα
 pip install -r requirements.txt
+
 Run the Streamlit app:
-bash
-Αντιγραφή κώδικα
 streamlit run main.py
+
 📊 Visualizations
 Top 10 Genres by City: Explore the most popular genres in each city.
 Ticket Prices by Day: Understand pricing trends across cities and days.
