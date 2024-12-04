@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from functions import top10_generos
 from datetime import timedelta
 
+@st.cache_data
 def top10_genres_by_city(df):   
     df_genero = df[~df['event_genres'].isnull()] 
     # is not 'NaN
@@ -32,6 +33,7 @@ def top10_genres_by_city(df):
     )
     st.plotly_chart(fig)
     
+@st.cache_data   
 def genres_by_city_sunburst(df):
     
     df_genero = df[~df['event_genres'].isnull()]
@@ -52,31 +54,68 @@ def genres_by_city_sunburst(df):
         margin=dict(t=0, l=0, r=0, b=0)
     )
     st.plotly_chart(fig_sunburst)
-
+    
+@st.cache_data
 def average_ticket_prices_by_city_and_day_of_the_week(df):
-    df_precios = df[df['ticket_price'] != 'No information available']
-    precios = df_precios['ticket_price'].apply(lambda x: x.split(', '))
-    precios_float = precios.apply(lambda x: sorted(map(float, x)))
-    mean_prices = [round(np.mean(x)) for x in precios_float]
+    # df_precios = df[df['ticket_price'] != 'No information available']
+    # precios = df_precios['ticket_price'].apply(lambda x: x.split(', '))
+    # precios_float = precios.apply(lambda x: sorted(map(float, x)))
+    # mean_prices = [round(np.mean(x)) for x in precios_float]
 
-    df_precios['mean_price'] = mean_prices
+    # df_precios.loc[:, 'mean_price'] = mean_prices
 
+    # fig_box = px.box(
+    #     data_frame=df_precios,
+    #     x="city",
+    #     y="mean_price",
+    #     color="city",
+    #     facet_col='starting_day',
+    #     template="plotly_dark",
+    #     points="suspectedoutliers",
+    #     width=1000,
+    #     height=500
+    # )
+    # fig_box.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    # fig_box.update_layout(
+    #     margin=dict(t=0, l=0, r=0, b=0)
+    # )
+    # st.plotly_chart(fig_box)
+
+    # Filter out rows where ticket prices are not available
+    df_precios = df[df['ticket_price'] != 'No information available'].copy()
+
+    # Convert ticket prices to floats and calculate mean
+    # Split the prices, convert to float, and compute the mean in one step
+    df_precios['mean_price'] = (
+        df_precios['ticket_price']
+        .str.split(', ')
+        .apply(lambda prices: np.mean(list(map(float, prices))))
+    )
+
+    # Create the box plot with Plotly
     fig_box = px.box(
         data_frame=df_precios,
         x="city",
         y="mean_price",
         color="city",
-        facet_col='starting_day',
+        facet_col="starting_day",
         template="plotly_dark",
         points="suspectedoutliers",
         width=1000,
         height=500
     )
+
+    # Simplify the facet column annotations
     fig_box.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+
+    # Adjust layout
     fig_box.update_layout(
         margin=dict(t=0, l=0, r=0, b=0)
     )
+
+    # Display the plot
     st.plotly_chart(fig_box)
+
 
 def event_timeline(df_, choose_date):
     """
@@ -91,7 +130,7 @@ def event_timeline(df_, choose_date):
     """
     # Filter the data for the selected 3-day period
     start_date = pd.to_datetime(choose_date)
-    end_date = start_date + timedelta(days=7)
+    end_date = start_date + timedelta(days=3)
     df_filtered = df_[(df_['starting_time'] >= start_date) & (df_['finishing_time'] <= end_date)]
     
     # Create the initial timeline chart
@@ -126,8 +165,7 @@ def event_timeline(df_, choose_date):
                      showticklabels=True, 
                      tickfont=dict(size=14, weight= 'bold'), 
                      tickmode="array",
-                     ticktext=pd.date_range(start=start_date, end=end_date, freq="6H").strftime("%H:%M %m-%d").tolist(),
-                    #  tickvals=pd.date_range(start=start_date, end=end_date, freq="12H").tolist(),
+                     ticktext=pd.date_range(start=start_date, end=end_date, freq="6h").strftime("%H:%M %m-%d").tolist(),
                      ),
         yaxis = dict(showgrid=True, zeroline=False, showticklabels=True, tickfont=dict(size=14, weight= 'bold'), tickmode="array", griddash="dot")
     )
@@ -135,20 +173,9 @@ def event_timeline(df_, choose_date):
         title_text='', 
         showgrid=True, 
         categoryorder="category ascending", # more options: "category ascending" or "category descending"
-        gridwidth=4,
-        
-    # Generate tick values and texts
+        gridwidth=4
     )
-    # fig_timeline.update_xaxes(
-    #     title_text='', 
-    #     showgrid=True,
-    #     tickmode="auto",
-    #     # tickvals=pd.date_range(start=start_date, end=end_date, freq="12H").tolist(),
-    #     # ticktext=pd.date_range(start=start_date, end=end_date, freq="6H").strftime("%H:%M").tolist(),
-    #     tickfont=dict(size=14, weight= 'bold'),
-    #     # dtick=3600000*12
-    # )
-
+        
     # Add rounded corner markers to the start and end of each event
     for _, row in df_filtered.iterrows():
         fig_timeline.add_trace(go.Scatter(
@@ -181,7 +208,7 @@ def event_timeline_clubs(df_, choose_date):
     """
     # Filter the data for the selected 3-day period
     start_date = pd.to_datetime(choose_date)
-    end_date = start_date + timedelta(days=7)
+    end_date = start_date + timedelta(days=3)
     df_filtered = df_[(df_['starting_time'] >= start_date) & (df_['finishing_time'] <= end_date)]
     
     # Create the initial timeline chart
