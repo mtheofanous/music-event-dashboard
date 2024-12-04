@@ -71,8 +71,8 @@ if choose_price_filter == "All":
     st.markdown(
     """
     ### Overview  
-    Welcome to the Event Data Analysis Dashboard!  
-    This dashboard provides insights into events across **Valencia**, **Madrid**, and **Barcelona**.  
+    Welcome to the Music Events Data Analysis Dashboard!  
+    This dashboard provides insights into music events across **Valencia**, **Madrid**, and **Barcelona**.  
     The data was sourced from **Xceed** and stored in an Airtable database.  
     """
     )
