@@ -48,7 +48,7 @@ df_airtable_events = airtable_to_dataframe(records)
 ciudades = ['Valencia', 'Barcelona', 'Madrid']
 
 # Define the finish date for event scraping (current date + 10 days)
-finish_date = datetime.now() + timedelta(days=5)
+finish_date = datetime.now() + timedelta(days=15)
 
 # Update event URLs using a custom scraping function `scraping_xceed_urls`
 df_urls = scraping_xceed_urls(ciudades, finish_date)

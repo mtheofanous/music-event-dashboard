@@ -95,8 +95,8 @@ def average_ticket_prices_by_city_and_day_of_the_week(df):
 
     # Display the plot
     st.plotly_chart(fig_box)
-
-
+    
+    
 def event_timeline(df_, choose_date):
     """
     Generates a timeline visualization for events over a 3-day period.
@@ -108,21 +108,38 @@ def event_timeline(df_, choose_date):
     Returns:
     None: Displays the timeline chart in the Streamlit app.
     """
+    import pandas as pd
+    import plotly.express as px
+    import streamlit as st
+    from datetime import timedelta
+
     # Filter the data for the selected 3-day period
     start_date = pd.to_datetime(choose_date)
     end_date = start_date + timedelta(days=3)
     df_filtered = df_[(df_['starting_time'] >= start_date) & (df_['finishing_time'] <= end_date)]
     
-    # Create the initial timeline chart
+    # Abbreviate event titles for display
+    max_display_length = 10  # Number of characters to show
+    df_filtered['abbreviated_title'] = df_filtered['event_title'].apply(
+        lambda x: x[:max_display_length] + "..." if len(x) > max_display_length else x
+    )
+    
+    # Create the timeline chart
     fig_timeline = px.timeline(
         data_frame=df_filtered,
         x_start="starting_time",
         x_end="finishing_time",
-        y="event_title",
+        y="abbreviated_title",
         color="place",
-        labels={"event_title": "Event Title"},
+        hover_data={
+            "event_title": True,  # Full event title shown on hover
+            "starting_time": True,
+            "finishing_time": True,
+            "place": True
+        },
+        labels={"abbreviated_title": "Event Title (Abbreviated)"},
         width=1800, 
-        height=200 + 15*len(df_filtered),
+        height=200 + 15 * len(df_filtered),
         color_continuous_scale=px.colors.sequential.Viridis
     )
 
@@ -131,26 +148,88 @@ def event_timeline(df_, choose_date):
         marker=dict(line=dict(width=0.2, color='black')),
         opacity=0.9,
         width=0.6,
-        
     )
     fig_timeline.update_layout(
         showlegend=True,
         legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5),
         margin=dict(t=20, l=20, r=20, b=20),
-        # plot_bgcolor="rgba(0, 0, 0, 0)",  # Transparent background
-        # paper_bgcolor="white",# Chart background
-        xaxis = dict(showgrid=True, 
-                     zeroline=True, 
-                     showticklabels=True, 
-                     tickfont=dict(size=14, weight= 'bold'), 
-                     tickmode="array",
-                     ticktext=pd.date_range(start=start_date, end=end_date, freq="6h").strftime("%H:%M %m-%d").tolist(),
-                     ),
-        yaxis = dict(showgrid=True, zeroline=False,categoryorder="category ascending", showticklabels=True, tickfont=dict(size=14, weight= 'bold'), tickmode="array", griddash="dot")
+        xaxis=dict(
+            showgrid=True,
+            zeroline=True,
+            showticklabels=True,
+            tickfont=dict(size=14, weight='bold'),
+            tickmode="array",
+            ticktext=pd.date_range(start=start_date, end=end_date, freq="6h").strftime("%H:%M %m-%d").tolist(),
+        ),
+        yaxis=dict(
+            showgrid=True,
+            zeroline=False,
+            categoryorder="category ascending",
+            showticklabels=True,
+            tickfont=dict(size=14, weight='bold'),
+            tickmode="array",
+            griddash="dot"
+        )
     )
 
     # Render the timeline chart in the Streamlit app
     return st.plotly_chart(fig_timeline)
+
+
+# def event_timeline(df_, choose_date):
+#     """
+#     Generates a timeline visualization for events over a 3-day period.
+
+#     Args:
+#     df_ (DataFrame): The input data containing event details.
+#     choose_date (str or datetime): The starting date for the 3-day period.
+
+#     Returns:
+#     None: Displays the timeline chart in the Streamlit app.
+#     """
+#     # Filter the data for the selected 3-day period
+#     start_date = pd.to_datetime(choose_date)
+#     end_date = start_date + timedelta(days=3)
+#     df_filtered = df_[(df_['starting_time'] >= start_date) & (df_['finishing_time'] <= end_date)]
+    
+#     # Create the initial timeline chart
+#     fig_timeline = px.timeline(
+#         data_frame=df_filtered,
+#         x_start="starting_time",
+#         x_end="finishing_time",
+#         y="event_title",
+#         color="place",
+#         labels={"event_title": "Event Title"},
+#         width=1800, 
+#         height=200 + 15*len(df_filtered),
+#         color_continuous_scale=px.colors.sequential.Viridis
+#     )
+
+#     # Update the appearance of the timeline
+#     fig_timeline.update_traces(
+#         marker=dict(line=dict(width=0.2, color='black')),
+#         opacity=0.9,
+#         width=0.6,
+        
+#     )
+#     fig_timeline.update_layout(
+#         showlegend=True,
+#         legend=dict(orientation="h", yanchor="bottom", y=1.05, xanchor="center", x=0.5),
+#         margin=dict(t=20, l=20, r=20, b=20),
+#         # plot_bgcolor="rgba(0, 0, 0, 0)",  # Transparent background
+#         # paper_bgcolor="white",# Chart background
+#         xaxis = dict(showgrid=True, 
+#                      zeroline=True, 
+#                      showticklabels=True, 
+#                      tickfont=dict(size=14, weight= 'bold'), 
+#                      tickmode="array",
+#                      ticktext=pd.date_range(start=start_date, end=end_date, freq="6h").strftime("%H:%M %m-%d").tolist(),
+#                      ),
+#         yaxis = dict(showgrid=True, zeroline=False,categoryorder="category ascending", showticklabels=True, tickfont=dict(size=14, weight= 'bold'), tickmode="array", griddash="dot")
+#     )
+
+#     # Render the timeline chart in the Streamlit app
+#     return st.plotly_chart(fig_timeline)
 
 # Function to generate a treemap visualization for the events per district
 def treemap_data(df):

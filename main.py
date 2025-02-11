@@ -242,7 +242,7 @@ if choice == "Analysis and Conclusions":
         if choice == "Event Timeline by City":
             st.subheader(f"Events Timeline by City, 3 days range from {choose_starting_date} to {choose_finishing_date}")
             # 3 days range from the selected date
-            choose_date = st.sidebar.date_input("**Choose a starting date:**", min_value=df['starting_time'].dt.date.min(), max_value=df['finishing_time'].dt.date.max() - timedelta(days=3), value=df['starting_time'].dt.date.min())    
+            choose_date = st.sidebar.date_input("**Choose a starting date:**", min_value=df['starting_time'].dt.date.min(), max_value=df['finishing_time'].dt.date.max() - timedelta(days=3), value=df['starting_time'].dt.date.min() + timedelta(days=4))    
 
             all_cities = df['city'].unique()
             
